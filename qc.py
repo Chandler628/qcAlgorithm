@@ -28,7 +28,7 @@ def read_data():
 #算法实现，通过gpu进行算法加速，计算potential函数以及梯度
 def potential_gpu(x, data):
     global Delta
-    x = torch.tensor(x, device=device, requires_grad=True, dtype=torch.float64)
+    x = x.clone().detach().requires_grad_(True)
     data = torch.tensor(data, device=device, dtype=torch.float64)
     sum1 = 0
     sum2 = 0
@@ -37,37 +37,25 @@ def potential_gpu(x, data):
         sum1 += (distance ** 2) * torch.exp((-distance ** 2) / 2 * (Delta ** 2))
         sum2 += torch.exp((-distance ** 2) / (2 * (Delta ** 2)))
     y = (1 / (2 * (Delta ** 2))) * (sum1 / sum2)
-    z = torch.ones((len(x), 1))
-    if is_gpu:
-        y = y.cpu()
+    z = torch.ones((len(x), 1),device = device)
     y.backward(z)
-    torch.cuda.empty_cache()
-    if is_gpu:
-        y = y.to(device)
     return y, x.grad
 
 #梯度下降算法
 def gradient_descent(data, learning_rate, iters):
     x = torch.tensor(data, device=device, dtype=torch.float64)
-    time1 = time.time()
     y, grad = potential_gpu(x, data)
-    print(time.time()-time1)
     for i in range(iters):
         if is_gpu:
             print(f"epoch:{i + 1:4d}||loss\n{y.cpu().detach().numpy()}")
         else:
             print(f"epoch:{i + 1:4d}||loss\n{y.detach().numpy()}")
         x = x - grad * learning_rate
-        time1 = time.time()
         grad = np.round(grad.cpu().numpy(), decimals=3)
-
         if grad.any() == 0:
             break
-        # grad = torch.tensor(grad, device=device, dtype=torch.float64)
         y, grad = potential_gpu(x, data)
         print(f"epoch:{i + 1:4d}  running  {time.time() - time1:0.5f}s")
-        # print(x)
-        # print(grad)
 
     return x
 
