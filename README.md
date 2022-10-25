@@ -1,1 +1,1 @@
-# Analyzing-documents-with-Quantum-Clustering-A-novel-pattern-recognition-algorithm-based-on-quantum-
+# qc
